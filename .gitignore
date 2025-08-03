@@ -122,3 +122,9 @@ Temporary Items
 
 # Builds
 Build/
+
+# Project specific - exclude these folders from version control
+AppIcons/
+YOLOv11_CoreML_SDK/
+yolo11Tests/
+yolo11UITests/

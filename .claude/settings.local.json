@@ -4,7 +4,8 @@
       "Bash(find:*)",
       "Bash(cp:*)",
       "Bash(xcodebuild:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
