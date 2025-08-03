@@ -15,7 +15,7 @@ protocol CameraPreviewDelegate: AnyObject {
 
 // 摄像头预览视图
 struct CameraPreviewView: UIViewRepresentable {
-    weak var delegate: CameraPreviewDelegate?
+    var delegate: CameraPreviewDelegate?
     
     func makeUIView(context: Context) -> CameraPreviewUIView {
         let view = CameraPreviewUIView()
@@ -23,7 +23,9 @@ struct CameraPreviewView: UIViewRepresentable {
         return view
     }
     
-    func updateUIView(_ uiView: CameraPreviewUIView, context: Context) {}
+    func updateUIView(_ uiView: CameraPreviewUIView, context: Context) {
+        uiView.delegate = delegate
+    }
 }
 
 // 摄像头预览UIView
@@ -59,19 +61,33 @@ class CameraPreviewUIView: UIView {
         self.previewLayer = previewLayer
         
         // 请求摄像头权限
+        print("请求摄像头权限...")
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-            guard granted else { return }
-            DispatchQueue.main.async {
+            print("摄像头权限结果: \(granted)")
+            guard granted else { 
+                print("摄像头权限被拒绝")
+                return 
+            }
+            DispatchQueue.global(qos: .userInitiated).async {
+                print("开始设置摄像头设备")
                 self?.setupCaptureDevice()
             }
         }
     }
     
     private func setupCaptureDevice() {
-        guard let session = session else { return }
+        guard let session = session else { 
+            print("session为空")
+            return 
+        }
         
         // 获取后置摄像头
-        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else { return }
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else { 
+            print("无法获取后置摄像头")
+            return 
+        }
+        
+        print("成功获取摄像头设备: \(device.localizedName)")
         
         do {
             let input = try AVCaptureDeviceInput(device: device)
@@ -91,14 +107,20 @@ class CameraPreviewUIView: UIView {
                 videoOutput = output
                 
                 // 设置输出方向
-                output.connection(with: .video)?.videoOrientation = .portrait
+                if #available(iOS 17.0, *) {
+                    output.connection(with: .video)?.videoRotationAngle = 90
+                } else {
+                    output.connection(with: .video)?.videoOrientation = .portrait
+                }
             }
             
             // 设置分辨率
             session.sessionPreset = .hd1280x720
             
             // 开始会话
+            print("开始摄像头会话")
             session.startRunning()
+            print("摄像头会话已启动")
         } catch {
             print("Error setting up camera: \(error)")
         }

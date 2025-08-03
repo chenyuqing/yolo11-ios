@@ -12,11 +12,11 @@ public struct Detection {
 }
 
 // The main predictor class that handles the Vision requests.
-class YOLOv11Predictor {
+public class YOLOv11Predictor {
     
     private let model: VNCoreMLModel
 
-    init() {
+    public init() {
         // Load the compiled model from the bundle.
         guard let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlmodelc") else {
             fatalError("Failed to find CoreML model in the bundle.")
@@ -34,7 +34,7 @@ class YOLOv11Predictor {
     }
 
     // Performs the prediction on a given image.
-    func performPrediction(on image: CGImage) async -> [Detection] {
+    public func performPrediction(on image: CGImage) async -> [Detection] {
         let request = VNCoreMLRequest(model: model)
         request.imageCropAndScaleOption = .scaleFill
 
