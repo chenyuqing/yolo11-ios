@@ -27,6 +27,7 @@
 		220CD16D2E3F9A910001516C /* yolo11.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = yolo11.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		220CD17A2E3F9A930001516C /* yolo11Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = yolo11Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		220CD1842E3F9A930001516C /* yolo11UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = yolo11UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		220CD1972E3F9A930001516C /* YOLOv11_CoreML_SDK */ = {isa = PBXFileReference; lastKnownFileType = folder; name = YOLOv11_CoreML_SDK; path = YOLOv11_CoreML_SDK; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
