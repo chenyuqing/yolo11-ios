@@ -10,12 +10,15 @@ import SwiftUI
 struct DetectionBannerView: View {
     let result: DetectionResult
     let screenHeight: CGFloat
-    @State private var offset: CGFloat = 0
+    let startOffset: CGFloat
+    @State private var verticalOffset: CGFloat = 0
     @State private var opacity: Double = 1.0
     
-    init(result: DetectionResult, screenHeight: CGFloat) {
+    init(result: DetectionResult, screenHeight: CGFloat, startOffset: CGFloat = 0) {
         self.result = result
         self.screenHeight = screenHeight
+        self.startOffset = startOffset
+        self._verticalOffset = State(initialValue: 0) // 从底部开始
     }
     
     var body: some View {
@@ -38,7 +41,7 @@ struct DetectionBannerView: View {
             Capsule()
                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
         )
-        .offset(y: offset)
+        .offset(x: startOffset, y: verticalOffset)
         .opacity(opacity)
         .onAppear {
             startAnimation()
@@ -46,16 +49,17 @@ struct DetectionBannerView: View {
     }
     
     private func startAnimation() {
-        // 计算动画终点（屏幕高度的2/3处）
-        let targetOffset = -(screenHeight * 2/3)
+        // IG直播样式：从底部向上移动到屏幕中间位置消失
+        let targetOffset = -(screenHeight * 0.5) // 移动到屏幕中间位置
         
+        // 向上移动动画
         withAnimation(.linear(duration: 3.0)) {
-            offset = targetOffset
+            verticalOffset = targetOffset
         }
         
-        // 淡出效果
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            withAnimation(.easeOut(duration: 0.5)) {
+        // 在移动过程中逐渐淡出
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            withAnimation(.easeOut(duration: 1.0)) {
                 opacity = 0
             }
         }

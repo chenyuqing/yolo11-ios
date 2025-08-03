@@ -18,6 +18,19 @@ class CameraViewModel: NSObject, CameraPreviewDelegate {
     // 摄像头状态
     var isDetecting = false
     var errorMessage: String?
+    var isUsingWideAngle = false
+    
+    // NMS参数
+    var confidenceThreshold: Float = 0.25 {
+        didSet {
+            predictor?.confidenceThreshold = confidenceThreshold
+        }
+    }
+    var iouThreshold: Float = 0.45 {
+        didSet {
+            predictor?.iouThreshold = iouThreshold
+        }
+    }
     
     // 检测结果
     var detectionResults: [DetectionResult] = []
@@ -32,6 +45,10 @@ class CameraViewModel: NSObject, CameraPreviewDelegate {
     private var lastDetectionTime: CFTimeInterval = 0
     private let minDetectionInterval: CFTimeInterval = 0.3  // 每0.3秒检测一次
     
+    // 用于控制弹幕生成频率
+    private var lastBannerTime: CFTimeInterval = 0
+    private let minBannerInterval: CFTimeInterval = 0.8  // 每0.8秒最多产生一个弹幕
+    
     override init() {
         super.init()
         setupPredictor()
@@ -41,8 +58,9 @@ class CameraViewModel: NSObject, CameraPreviewDelegate {
     private func setupPredictor() {
         do {
             predictor = try YOLOv11Predictor()
+            print("✅ YOLOv11Predictor 初始化成功")
         } catch {
-            print("Failed to initialize YOLOv11Predictor: \(error)")
+            print("❌ Failed to initialize YOLOv11Predictor: \(error)")
             errorMessage = error.localizedDescription
         }
     }
@@ -62,15 +80,33 @@ class CameraViewModel: NSObject, CameraPreviewDelegate {
     func addDetectionResultForBanner(_ result: DetectionResult) {
         bannerResults.append(result)
         
-        // 限制弹幕数量，避免过多
-        if bannerResults.count > 30 {
+        // 限制弹幕数量，避免过多（IG样式建议少一些）
+        if bannerResults.count > 8 {
             bannerResults.removeFirst()
+        }
+        
+        // 自动清理已消失的弹幕
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            if let index = self.bannerResults.firstIndex(where: { $0.id == result.id }) {
+                self.bannerResults.remove(at: index)
+            }
         }
     }
     
     // 清除弹幕结果
     func clearBannerResults() {
         bannerResults.removeAll()
+    }
+    
+    // 切换相机类型（广角/普通）
+    func toggleCameraType() {
+        isUsingWideAngle.toggle()
+        // 通知代理更新相机设置
+        NotificationCenter.default.post(
+            name: NSNotification.Name("CameraTypeChanged"),
+            object: nil,
+            userInfo: ["isWideAngle": isUsingWideAngle]
+        )
     }
     
     // MARK: - CameraPreviewDelegate
@@ -89,15 +125,28 @@ class CameraViewModel: NSObject, CameraPreviewDelegate {
     }
     
     private func processDetection(sampleBuffer: CMSampleBuffer) {
-        guard let predictor = predictor else { return }
+        guard let predictor = predictor else { 
+            print("⚠️ Predictor is nil, skipping detection")
+            return 
+        }
+        
+        guard isDetecting else {
+            return
+        }
         
         // 从sampleBuffer获取图像
-        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { 
+            print("⚠️ Failed to get pixel buffer from sample buffer")
+            return 
+        }
         
         // 创建CGImage
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
         let context = CIContext()
-        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return }
+        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { 
+            print("⚠️ Failed to create CGImage from pixel buffer")
+            return 
+        }
         
         // 执行异步预测
         Task {
@@ -116,9 +165,14 @@ class CameraViewModel: NSObject, CameraPreviewDelegate {
             await MainActor.run {
                 self.detectionResults = results
                 
-                // 为每个检测结果创建弹幕
-                for result in results {
-                    self.addDetectionResultForBanner(result)
+                // 控制弹幕生成频率，避免过于频繁
+                let currentTime = CACurrentMediaTime()
+                if currentTime - self.lastBannerTime >= self.minBannerInterval {
+                    // 只为置信度最高的检测结果创建弹幕
+                    if let bestResult = results.max(by: { $0.confidence < $1.confidence }) {
+                        self.addDetectionResultForBanner(bestResult)
+                        self.lastBannerTime = currentTime
+                    }
                 }
             }
         }

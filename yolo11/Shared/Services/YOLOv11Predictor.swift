@@ -21,8 +21,8 @@ struct Detection {
 class YOLOv11Predictor {
     
     private let model: VNCoreMLModel
-    private let confidenceThreshold: Float = 0.25
-    private let iouThreshold: Float = 0.45
+    var confidenceThreshold: Float = 0.25
+    var iouThreshold: Float = 0.45
     
     // COCO数据集的80个类别标签
     private let cocoClasses = [
