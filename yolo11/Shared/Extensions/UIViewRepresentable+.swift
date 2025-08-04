@@ -167,8 +167,20 @@ class CameraPreviewUIView: UIView {
                     videoOutput = output
                 }
                 
-                // 设置分辨率
-                session.sessionPreset = .hd1280x720
+                // 设置为设备支持的最高质量分辨率
+                if session.canSetSessionPreset(.hd4K3840x2160) {
+                    session.sessionPreset = .hd4K3840x2160
+                    print("🎥 使用4K分辨率: 3840x2160")
+                } else if session.canSetSessionPreset(.hd1920x1080) {
+                    session.sessionPreset = .hd1920x1080
+                    print("🎥 使用1080p分辨率: 1920x1080")
+                } else if session.canSetSessionPreset(.hd1280x720) {
+                    session.sessionPreset = .hd1280x720
+                    print("🎥 使用720p分辨率: 1280x720")
+                } else {
+                    session.sessionPreset = .high
+                    print("🎥 使用设备最高质量预设")
+                }
             }
             
             // 设置输出方向
