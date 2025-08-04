@@ -26,19 +26,44 @@ class SpeechRecognitionService: NSObject, ObservableObject {
     // MARK: - Initialization
     override init() {
         super.init()
+        setupSpeechRecognizer()
         requestPermissions()
+    }
+    
+    /// 设置语音识别器
+    private func setupSpeechRecognizer() {
+        // 确保语音识别器可用
+        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "zh-CN")) else {
+            print("❌ 中文语音识别不可用，尝试使用系统默认语言")
+            speechRecognizer = SFSpeechRecognizer()
+            return
+        }
+        
+        speechRecognizer = recognizer
+        print("✅ 语音识别器初始化成功，语言: \(recognizer.locale.identifier)")
     }
     
     // MARK: - Public Methods
     
     /// 开始语音识别
     func startRecording() {
+        print("🔄 尝试开始语音识别...")
+        
+        // 检查权限状态
         guard isAuthorized else {
             print("❌ 语音识别未授权")
+            requestPermissions() // 重新请求权限
+            return
+        }
+        
+        // 检查语音识别器可用性
+        guard let speechRecognizer = speechRecognizer, speechRecognizer.isAvailable else {
+            print("❌ 语音识别器不可用")
             return
         }
         
         if audioEngine.isRunning {
+            print("⚠️ 音频引擎正在运行，先停止")
             stopRecording()
             return
         }
@@ -46,9 +71,12 @@ class SpeechRecognitionService: NSObject, ObservableObject {
         do {
             try startSpeechRecognition()
             isRecording = true
-            print("🎙️ 开始语音识别...")
+            print("🎙️ 语音识别已启动")
         } catch {
             print("❌ 启动语音识别失败: \(error)")
+            DispatchQueue.main.async {
+                self.isRecording = false
+            }
         }
     }
     
@@ -70,6 +98,24 @@ class SpeechRecognitionService: NSObject, ObservableObject {
     /// 清除识别文本
     func clearText() {
         recognizedText = ""
+    }
+    
+    /// 诊断语音识别状态
+    func diagnoseStatus() {
+        print("🔍 语音识别状态诊断:")
+        print("  - 授权状态: \(isAuthorized)")
+        print("  - 录音状态: \(isRecording)")
+        print("  - 语音识别器可用: \(speechRecognizer?.isAvailable ?? false)")
+        print("  - 音频引擎运行: \(audioEngine.isRunning)")
+        print("  - 设备语言: \(Locale.current.identifier)")
+        print("  - 语音识别器语言: \(speechRecognizer?.locale.identifier ?? "未知")")
+        
+        // 检查权限状态
+        let speechAuthStatus = SFSpeechRecognizer.authorizationStatus()
+        print("  - 语音识别权限: \(speechAuthStatus.rawValue)")
+        
+        let microphoneAuthStatus = AVAudioApplication.shared.recordPermission
+        print("  - 麦克风权限: \(microphoneAuthStatus.rawValue)")
     }
     
     // MARK: - Private Methods
@@ -127,10 +173,12 @@ class SpeechRecognitionService: NSObject, ObservableObject {
         recognitionTask?.cancel()
         recognitionTask = nil
         
-        // 配置音频会话
+        // 配置音频会话 - 增强配置
         let audioSession = AVAudioSession.sharedInstance()
-        try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+        try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        
+        print("✅ 音频会话配置成功")
         
         // 创建识别请求
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
@@ -151,17 +199,28 @@ class SpeechRecognitionService: NSObject, ObservableObject {
         audioEngine.prepare()
         try audioEngine.start()
         
-        // 开始识别任务
+        // 开始识别任务 - 增强错误处理
         recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let self = self else { return }
             
             var isFinal = false
             
             if let result = result {
+                let recognizedString = result.bestTranscription.formattedString
+                print("🎯 识别到文本: \(recognizedString)")
+                
                 DispatchQueue.main.async {
-                    self.recognizedText = result.bestTranscription.formattedString
+                    self.recognizedText = recognizedString
                 }
                 isFinal = result.isFinal
+                
+                if isFinal {
+                    print("✅ 语音识别完成: \(recognizedString)")
+                }
+            }
+            
+            if let error = error {
+                print("❌ 语音识别错误: \(error.localizedDescription)")
             }
             
             if error != nil || isFinal {

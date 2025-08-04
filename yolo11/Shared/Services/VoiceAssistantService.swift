@@ -18,8 +18,8 @@ class VoiceAssistantService: ObservableObject {
     @Published var conversationHistory: [ConversationItem] = []
     
     // MARK: - Services
-    private let speechRecognition = SpeechRecognitionService()
-    private let textToSpeech = TextToSpeechService()
+    let speechRecognition = SpeechRecognitionService()
+    let textToSpeech = TextToSpeechService()
     
     // MARK: - Current Detection Data
     private var currentDetections: [DetectionResult] = []

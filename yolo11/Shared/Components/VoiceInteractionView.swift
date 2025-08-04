@@ -124,6 +124,17 @@ struct VoiceInteractionView: View {
                 }
             }
             
+            // 调试信息按钮
+            HStack(spacing: 12) {
+                quickActionButton("诊断状态", systemImage: "stethoscope") {
+                    voiceAssistant.speechRecognition.diagnoseStatus()
+                }
+                
+                quickActionButton("测试语音", systemImage: "speaker.3") {
+                    voiceAssistant.textToSpeech.speak("语音测试，如果您能听到这段话，说明语音合成功能正常。")
+                }
+            }
+            
             // 常用问题按钮
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
