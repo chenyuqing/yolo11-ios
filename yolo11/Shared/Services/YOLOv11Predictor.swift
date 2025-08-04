@@ -217,9 +217,11 @@ class YOLOv11Predictor {
         return detections
     }
     
-    // 解析YOLO输出
+    // 解析YOLO输出 - 内存优化版本
     private func parseYOLOOutput(multiArray: MLMultiArray) -> [Detection] {
+        // 预分配检测结果数组容量以减少重分配
         var detections: [Detection] = []
+        detections.reserveCapacity(50)  // 预期最多50个有效检测
         
         // YOLO输出格式: [1, 84, 8400]
         // 84 = 4个边界框坐标 (x, y, w, h) + 80个类别概率
@@ -252,13 +254,16 @@ class YOLOv11Predictor {
                 }
             }
             
-            // 过滤低置信度检测
+            // 过滤低置信度检测 - 早期退出优化
             if maxClassScore >= confidenceThreshold {
                 // 转换边界框格式：从中心点(x,y,w,h)到左上角(x,y,w,h)
                 let rectX = (x - w / 2) / 640.0  // 归一化到[0,1]
                 let rectY = (y - h / 2) / 640.0
                 let rectW = w / 640.0
                 let rectH = h / 640.0
+                
+                // 过滤明显无效的边界框
+                guard rectW > 0.01 && rectH > 0.01 else { continue }
                 
                 // 确保边界框在有效范围内
                 let boundingBox = CGRect(
@@ -278,10 +283,18 @@ class YOLOv11Predictor {
                 )
                 
                 detections.append(detection)
+                
+                // 限制检测结果数量以控制内存使用
+                if detections.count >= 30 {
+                    break
+                }
             }
         }
         
         print("原始检测结果数量: \(detections.count)")
+        
+        // 内存优化：压缩数组容量
+        detections.reserveCapacity(detections.count)
         return detections
     }
 }

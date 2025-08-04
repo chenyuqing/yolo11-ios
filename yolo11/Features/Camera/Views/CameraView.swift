@@ -49,6 +49,16 @@ struct CameraView: View {
                     HStack {
                         Spacer()
                         VStack(alignment: .trailing, spacing: 12) {
+                            // 内存使用显示
+                            let memoryInfo = viewModel.getMemoryInfo()
+                            Text("内存: \\(memoryInfo.usage)")
+                                .font(.caption2)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.black.opacity(0.6))
+                                .cornerRadius(4)
+                            
                             // 置信度阈值滑条
                             VStack(alignment: .trailing, spacing: 4) {
                                 Text("置信度: \(String(format: "%.2f", viewModel.confidenceThreshold))")
