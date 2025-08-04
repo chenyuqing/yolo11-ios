@@ -8,6 +8,15 @@
 import SwiftUI
 import AVFoundation
 
+struct MemoryInfoView: View {
+    let viewModel: CameraViewModel
+    
+    var body: some View {
+        let memInfo = viewModel.getMemoryInfo()
+        Text("内存: \(memInfo.usage)")
+    }
+}
+
 struct CameraView: View {
     @State private var viewModel = CameraViewModel()
     @State private var screenSize: CGSize = .zero
@@ -49,8 +58,8 @@ struct CameraView: View {
                     HStack {
                         Spacer()
                         VStack(alignment: .trailing, spacing: 12) {
-                            // 内存使用显示
-                            Text("内存: \\(viewModel.getMemoryInfo().usage)")
+                            // 内存使用显示  
+                            MemoryInfoView(viewModel: viewModel)
                                 .font(.caption2)
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 6)
