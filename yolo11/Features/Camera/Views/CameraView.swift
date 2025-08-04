@@ -109,6 +109,15 @@ struct CameraView: View {
                     Spacer()
                 }
                 
+                // 语音交互界面（底部）
+                VStack {
+                    Spacer()
+                    
+                    VoiceInteractionView(detections: $viewModel.detectionResults)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 10)
+                }
+                
                 // 相机切换按钮（右下角）
                 VStack {
                     Spacer()
@@ -134,7 +143,7 @@ struct CameraView: View {
                             .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
                         }
                         .padding(.trailing, 20)
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 120) // 为语音交互界面留出空间
                     }
                 }
             }
