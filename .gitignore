@@ -128,3 +128,8 @@ AppIcons/
 YOLOv11_CoreML_SDK/
 yolo11Tests/
 yolo11UITests/
+
+# AI assistant files - exclude from version control
+.claude/
+CLAUDE.md
+GEMINI.md
