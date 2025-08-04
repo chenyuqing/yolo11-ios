@@ -50,8 +50,7 @@ struct CameraView: View {
                         Spacer()
                         VStack(alignment: .trailing, spacing: 12) {
                             // 内存使用显示
-                            let memoryInfo = viewModel.getMemoryInfo()
-                            Text("内存: \\(memoryInfo.usage)")
+                            Text("内存: \\(viewModel.getMemoryInfo().usage)")
                                 .font(.caption2)
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 6)

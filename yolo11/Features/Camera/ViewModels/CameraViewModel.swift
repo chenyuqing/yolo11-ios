@@ -110,7 +110,7 @@ class CameraViewModel: NSObject, CameraPreviewDelegate {
     /// 设置内存监控
     private func setupMemoryMonitoring() {
         NotificationCenter.default.addObserver(
-            forName: .memoryPressureDetected,
+            forName: UIApplication.didReceiveMemoryWarningNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
